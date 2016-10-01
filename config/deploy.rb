@@ -37,18 +37,7 @@ set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp', 'public/uploads', '
 
 ###########################################################
 # Set options from 'capistrano/bundler'
-
-# NOTE:
-# 1) You may want to comment out the following 2 line of code if you want to
-# follow Bundler's default behavior for deployment, that is to install all
-# Gems into vendor/bundle, rather a dir under ~/.rvm.
-# 2) If you want to avoid any network download for Gems, do it as:
-# set :bundle_flags, "--local"
-# Since we have already run "bundle package" and saved the Gems in vendor/cache
-# in Git repo, bundler is smart to find it and will install Gems from it.
-set :bundle_flags, nil # default to "--deployment --quiet"
-set :bundle_path, nil
-
+set :bundle_flags, "--deployment" # The default is "--deployment --quiet"
 set :bundle_without, (fetch(:bundle_without) << ' deployment')
 
 ###########################################################
@@ -64,9 +53,11 @@ set :keep_assets, 2
 
 namespace :deploy do
 
-  # If you choose to put the production config out of the code repo, you could
-  # link it at each deployment like this:
-  after :updating, :config_app do
+  # If you put the production config outside the dir of the code, say "~/discourse.conf", 
+  # you can link it at deployment time with this task. 
+  # If you save the production config file into repo along with your code, then 
+  # you need to comment out this task.
+  after :updating, :link_config do
     on roles(:web), in: :parallel do
       within release_path.join('config') do
         execute :ln, '-s', '~/discourse.conf'
@@ -81,14 +72,5 @@ namespace :deploy do
       end
     end
   end
-
-  # after :restart, :clear_cache do
-  #   on roles(:web), in: :groups, limit: 3, wait: 10 do
-  #     # Here we can do anything such as:
-  #     # within release_path do
-  #     #   execute :rake, 'cache:clear'
-  #     # end
-  #   end
-  # end
 
 end
